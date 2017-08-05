@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Giphy API</title>
+  <style type="text/css">
+    button,
+    div,
+    form,
+    input {
+      margin: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>Giphy Search</h1>
+
+    <!-- Rendered Buttons will get Dumped Here  -->
+    <div id="buttons"></div>
+
+    <form id="topic-form">
+      <label for="topic-input">Submit a Topic</label>
+      <input type="text" id="topic-input"><br>
+
+      <!-- Button triggers new giphies to be added -->
+      <input id="add-topic" type="submit" value="Add the Topic">
+    </form>
+
+    <!-- Giphies will Get Dumped Dere -->
+    <div id="giphies"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script type="text/javascript">
+    // Initial array of movies
+    var topics = ["Computers", "Guild Wars 2", "Paintball"];
+
+
+    // QueryURL for Giphy API
+    function displayGiphy() {
+      var topic = $(this).attr("topic-name");
+      var queryURL = "http://api.giphy.com/v1/gifs/search?q=" + topic + "&api_key=dc6zaTOxFJmzC&limit=10";
+
+      $.ajax({url: queryURL,method: 'GET'}).done(function(response) {
+        renderButtons();
+        console.log(response);
+
+        // for loop through the data object
+        for (var i = 0; i < response.data.length; i++) {
+
+          // Only taking action if the photo has an appropriate rating
+          if (response.data[i].rating !== "r" && response.data[i].rating !== "pg-13") {
+            // Creating a div with the class "item"
+            var gifDiv = $("<div class='item'>");
+
+            // Storing the result item's rating
+            var rating = response.data[i].rating;
+            console.log(rating);
+
+            // Creating a paragraph tag with the result item's rating
+            var p = $("<p>").text("Rating: " + rating);
+
+            // Creating an image tag
+            var gifImage = $("<img>");
+
+            // Giving the image tag an src attribute of a proprty pulled off the
+            // result item
+            gifImage.attr("src", response.data[i].images.fixed_height_still.url);
+            gifImage.attr("data-animate", response.data[i].images.fixed_height.url);
+            gifImage.attr("data-state", "still");
+            gifImage.addClass("gif");
+            gifImage.attr("alt", "image here");
+
+            console.log(gifImage);
+
+            // Appending the paragraph and personImage we created to the "gifDiv" div we created
+            gifDiv.append(gifImage);
+            gifDiv.append(p);
+
+            // Prepending the gifDiv to the "#gifs-appear-here" div in the HTML
+            $("#giphies").prepend(gifDiv);
+
+          }
+        }
+      });
+    }
+
+    // Function for displaying movie data
+    function renderButtons() {
+
+      // Deleting the buttons prior to adding new movies
+      // (this is necessary otherwise you will have repeat buttons)
+      $("#buttons").empty();
+
+      // Looping through the array of movies
+      for (var i = 0; i < topics.length; i++) {
+
+        // Then dynamicaly generating buttons for each movie in the array
+        // This code $("<button>") is all jQuery needs to create the beginning and end tag. (<button></button>)
+        var g = $("<button>");
+        // Adding a class of movie to our button
+        g.addClass("topic");
+        // Adding a data-attribute
+        g.attr("topic-name", topics[i]);
+        // Providing the initial button text
+        g.text(topics[i]);
+        // Adding the button to the buttons-view div
+        $("#buttons").append(g);
+      }
+    }
+
+    // This function handles events where one button is clicked
+    $("#add-topic").on("click", function(event) {
+      event.preventDefault();
+
+      // This line grabs the input from the textbox
+      var topic = $("#topic-input").val().trim();
+
+      // Adding the movie from the textbox to our array
+      topics.push(topic);
+      console.log(topics)
+
+      // Calling renderButtons which handles the processing of our movie array
+      renderButtons();
+    });
+
+    $(".gif").on("click", function() {
+      // The attr jQuery method allows us to get or set the value of any attribute on our HTML element
+      console.log("i was clicked");
+      var state = $(this).attr("data-state");
+      // If the clicked image's state is still, update its src attribute to what its data-animate value is.
+      // Then, set the image's data-state to animate
+      // Else set src to the data-still value
+      if (state === "still") {
+        $(this).attr("src", $(this).attr("data-animate"));
+        $(this).attr("data-state", "animate");
+      } else {
+        $(this).attr("src", $(this).attr("src"));
+        $(this).attr("data-state", "still");
+      }
+    });
+
+    // Using $(document).on instead of $(".movie").on to add event listenersto dynamically generated elements
+    $(document).on("click", ".topic", displayGiphy);
+
+    // Calling the renderButtons function to display the intial buttons
+    renderButtons();
+
+  </script>
+
+</body>
+
+</html>
